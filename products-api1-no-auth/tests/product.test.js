@@ -6,74 +6,74 @@ const api = supertest(app);
 const Product = require("../models/productModel");
 
 const initialProducts = [
-  {
-    title: "Brush",
-    category: "Food",
-    description: "brush brush",
-    price: 10,
-    stockQuantity: 5,
-    supplier: {
-      name: "nvidia",
-      contactEmail: "nvidia@gmail.com",
-      contactPhone: "4093829582",
-      rating: 4
+    {
+        title: "Brush",
+        category: "Food",
+        description: "brush brush",
+        price: 10,
+        stockQuantity: 5,
+        supplier: {
+            name: "nvidia",
+            contactEmail: "nvidia@gmail.com",
+            contactPhone: "4093829582",
+            rating: 4
+        }
+    },
+    {
+        title: "Brushpremium",
+        category: "Food",
+        description: "brush brush",
+        price: 10,
+        stockQuantity: 5,
+        supplier: {
+            name: "nvidia",
+            contactEmail: "nvidia@gmail.com",
+            contactPhone: "4093829582",
+            rating: 4
+        }
     }
-  },
-  {
-    title: "Brushpremium",
-    category: "Food",
-    description: "brush brush",
-    price: 10,
-    stockQuantity: 5,
-    supplier: {
-      name: "nvidia",
-      contactEmail: "nvidia@gmail.com",
-      contactPhone: "4093829582",
-      rating: 4
-    }
-  }
 ];
 
 
 beforeAll(async () => {
-  await connectDB();
+    await connectDB();
 });
 
 afterAll(() => {
-  mongoose.connection.close();
+    mongoose.connection.close();
 });
 
 beforeEach(async () => {
-  await Product.deleteMany({});
-  let productObject = new Product(initialProducts[0]);
-  await productObject.save();
-  productObject = new Product(initialProducts[1]);
-  await productObject.save();
+    await Product.deleteMany({});
+    let productObject = new Product(initialProducts[0]);
+    await productObject.save();
+    productObject = new Product(initialProducts[1]);
+    await productObject.save();
 });
 
 // GET /api/products
 describe("when there is initially some products saved", () => {
-  it("should return all products",
-    async () => {
-      const response = await api.get("/api/products").expect(200);
-      expect(response.body).toHaveLength(initialProducts.length);
+    it("should return all products",
+        async () => {
+            const response = await api.get("/api/products").expect(200);
+            expect(response.body).toHaveLength(initialProducts.length);
 
-    })
+        })
 
-  it("should return products as json", async () => {
-    await api
-      .get("/api/products")
-      .expect(200)
-      .expect("Content-Type", /application\/json/);
-  });
+    it("should return products as json", async () => {
+        await api
+            .get("/api/products")
+            .expect(200)
+            .expect("Content-Type", /application\/json/);
+    });
 
-  it("should include a specific product in the returned list", async () => {
-    const response = await api.get("/api/products");
+    it("should include a specific product in the returned list", async () => {
+        const response = await api.get("/api/products");
 
-    expect(response.body.map((product) => product.category)).toContain(
-      "Food"
-    );
-  });
+        expect(response.body.map((product) => product.category)).toContain(
+            "Food"
+        );
+    });
 });
 
 // POST /api/products
@@ -83,121 +83,162 @@ describe("when there is initially some products saved", () => {
 //     should persist the new product in the database
 
 describe("POST /api/products", () => {
-  describe("when the payload is valid", () => {
-    it("should return status 201", async () => {
-      const newProduct = {
-        title: "Phone",
-        category: "Electronics",
-        description: "beep boop",
-        price: 2000,
-        stockQuantity: 67,
-        supplier: {
-          name: "Apple",
-          contactEmail: "jeff@gmail.com",
-          contactPhone: "4093829582",
-          rating: 5,
-        },
-      };
+    describe("when the payload is valid", () => {
+        it("should return status 201", async () => {
+            const newProduct = {
+                title: "Phone",
+                category: "Electronics",
+                description: "beep boop",
+                price: 2000,
+                stockQuantity: 67,
+                supplier: {
+                    name: "Apple",
+                    contactEmail: "jeff@gmail.com",
+                    contactPhone: "4093829582",
+                    rating: 5,
+                },
+            };
 
-      await api.post("/api/products").send(newProduct).expect(201);
+            await api.post("/api/products").send(newProduct).expect(201);
+        });
+
+        it("should persist the new product in the database", async () => {
+            const newProduct = {
+                title: "Phone",
+                category: "Electronics",
+                description: "beep boop",
+                price: 2000,
+                stockQuantity: 67,
+                supplier: {
+                    name: "Apple",
+                    contactEmail: "jeff@gmail.com",
+                    contactPhone: "4093829582",
+                    rating: 5,
+                },
+            };
+
+            await api.post("/api/products").send(newProduct).expect(201);
+
+            const productsAfterPost = await Product.find({});
+            expect(productsAfterPost).toHaveLength(initialProducts.length + 1);
+            expect(productsAfterPost.map((product) => product.title)).toContain(newProduct.title);
+        });
     });
 
-    it("should persist the new product in the database", async () => {
-      const newProduct = {
-        title: "Phone",
-        category: "Electronics",
-        description: "beep boop",
-        price: 2000,
-        stockQuantity: 67,
-        supplier: {
-          name: "Apple",
-          contactEmail: "jeff@gmail.com",
-          contactPhone: "4093829582",
-          rating: 5,
-        },
-      };
+    //   when the payload is invalid
+    //     should return status 400 when title is missing
+    //     should not increase the number of products in the database
 
-      await api.post("/api/products").send(newProduct).expect(201);
+    describe("when the payload is invalid", () => {
+        it("should return status 400 when title is missing", async () => {
+            const invalidProduct = {
+                category: "Electronics",
+                description: "Missing title should fail.",
+                price: 2000,
+                stockQuantity: 67,
+                supplier: {
+                    name: "Apple",
+                    contactEmail: "jeff@gmail.com",
+                    contactPhone: "4093829582",
+                    rating: 5,
+                },
+            };
 
-      const productsAfterPost = await Product.find({});
-      expect(productsAfterPost).toHaveLength(initialProducts.length + 1);
-      expect(productsAfterPost.map((product) => product.title)).toContain(newProduct.title);
+            await api.post("/api/products").send(invalidProduct).expect(400);
+        });
+
+        it("should not increase the number of products in the database", async () => {
+            const invalidProduct = {
+                fgfgf: "dfds",
+                category: "Electronics",
+                description: "Missing title should fail.",
+                price: 2000,
+                stockQuantity: 67,
+                supplier: {
+                    name: "Apple",
+                    contactEmail: "jeff@gmail.com",
+                    contactPhone: "4093829582",
+                    rating: 5,
+                },
+            };
+
+            await api.post("/api/products").send(invalidProduct).expect(400);
+
+            const productsAtEnd = await Product.find({});
+            expect(productsAtEnd).toHaveLength(initialProducts.length);
+        });
     });
-  });
-
-  //   when the payload is invalid
-  //     should return status 400 when title is missing
-  //     should not increase the number of products in the database
-
-  describe("when the payload is invalid", () => {
-    it("should return status 400 when title is missing", async () => {
-      const invalidProduct = {
-        category: "Electronics", 
-        description: "Missing title should fail.",
-        price: 2000,
-        stockQuantity: 67,
-        supplier: {
-          name: "Apple",
-          contactEmail: "jeff@gmail.com",
-          contactPhone: "4093829582",
-          rating: 5,
-        },
-      };
-
-      await api.post("/api/products").send(invalidProduct).expect(400);
-    });
-
-    it("should not increase the number of products in the database", async () => {
-      const invalidProduct = {
-        fgfgf: "dfds",
-        category: "Electronics", 
-        description: "Missing title should fail.",
-        price: 2000,
-        stockQuantity: 67,
-        supplier: {
-          name: "Apple",
-          contactEmail: "jeff@gmail.com",
-          contactPhone: "4093829582",
-          rating: 5,
-        },
-      };
-
-      await api.post("/api/products").send(invalidProduct).expect(400);
-
-      const productsAtEnd = await Product.find({});
-      expect(productsAtEnd).toHaveLength(initialProducts.length);
-    });
-  });
 });
 
 //GET /api/products/:productId
 
-
 describe("GET /api/products/:productId", () => {
-  describe("when the id is valid", () => {
-    it("should return one product by ID", async () => {
-      const product = await Product.findOne();
+    describe("when the id is valid", () => {
+        it("should return one product by ID", async () => {
+            const product = await Product.findOne();
 
-      const response = await api
-        .get(`/api/products/${product._id}`)
-        .expect(200)
-        .expect("Content-Type", /application\/json/);
+            const response = await api
+                .get(`/api/products/${product._id}`)
+                .expect(200)
+                .expect("Content-Type", /application\/json/);
 
-      expect(response.body.title).toBe(product.title);
+            expect(response.body.title).toBe(product.title);
+        });
     });
-  });
 
-  describe("when the id does not exist", () => {
-    it("should return status 404", async () => {
-      const nonExistentId = new mongoose.Types.ObjectId();
+    describe("when the id does not exist", () => {
+        it("should return status 404", async () => {
+            const nonExistentId = new mongoose.Types.ObjectId();
 
-      await api.get(`/api/products/${nonExistentId}`).expect(404);
+            await api.get(`/api/products/${nonExistentId}`).expect(404);
+        });
     });
-  });
 
-  describe("when the id is invalid", () => {
-    it("should return status 400", async () => {
-      await api.get("/api/products/12345").expect(404);
+    describe("when the id is invalid", () => {
+        it("should return status 400", async () => {
+            await api.get("/api/products/12345").expect(404);
+        });
     });
-  });
+});
+
+//PUT /api/products/:productId
+
+//   when the id is valid
+//     should return status 200
+//     should persist the updated fields in the database
+
+describe("PUT /api/products/:productId", () => {
+    describe("when the id is valid", () => {
+        it("should return status 200", async () => {
+            const product = await Product.findOne();
+
+            await api
+                .put(`/api/products/${product._id}`)
+                .send({ description: "Updated description", price: 10.35 })
+                .expect(200);
+        });
+
+        it("should persist the updated fields in the database", async () => {
+            const product = await Product.findOne();
+            const updates = {
+                description: "Updated description",
+                price: 10.35,
+            };
+
+            await api.put(`/api/products/${product._id}`).send(updates).expect(200);
+
+            const updatedProduct = await Product.findById(product._id);
+            expect(updatedProduct.description).toBe(updates.description);
+            expect(updatedProduct.price).toBe(updates.price);
+        });
+    });
+
+    // when the id is invalid
+    // should return status 404
+
+    describe("when the id is invalid", () => {
+        it("should return status 404", async () => {
+            await api.put("/api/products/12345345").send({}).expect(404);
+        });
+    });
 });
