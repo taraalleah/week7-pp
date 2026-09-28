@@ -242,3 +242,30 @@ describe("PUT /api/products/:productId", () => {
         });
     });
 });
+
+//DELETE /api/products/:productId
+
+describe("DELETE /api/products/:productId", () => {
+  describe("when the id is valid", () => {
+    it("should return status 204", async () => {
+      const product = await Product.findOne();
+
+      await api.delete(`/api/products/${product._id}`).expect(204);
+    });
+
+    it("should remove the product from the database", async () => {
+      const product = await Product.findOne();
+
+      await api.delete(`/api/products/${product._id}`).expect(204);
+
+      const deletedProduct = await Product.findById(product._id);
+      expect(deletedProduct).toBeNull();
+    });
+  });
+
+  describe("when the id is invalid", () => {
+    it("should return status 404", async () => {
+      await api.delete("/api/products/12345").expect(404);
+    });
+  });
+});
