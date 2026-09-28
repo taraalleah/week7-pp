@@ -6,35 +6,37 @@ const api = supertest(app);
 const Product = require("../models/productModel");
 
 const initialProducts = [
-  { title: "Brush", 
-    category: "Food", 
+  {
+    title: "Brush",
+    category: "Food",
     description: "brush brush",
     price: 10,
     stockQuantity: 5,
     supplier: {
-        name: "nvidia",
-        contactEmail: "nvidia@gmail.com",
-        contactPhone: "4093829582",
-        rating: 4
+      name: "nvidia",
+      contactEmail: "nvidia@gmail.com",
+      contactPhone: "4093829582",
+      rating: 4
     }
-},
-  { title: "Brushpremium", 
-    category: "Food", 
+  },
+  {
+    title: "Brushpremium",
+    category: "Food",
     description: "brush brush",
     price: 10,
     stockQuantity: 5,
     supplier: {
-        name: "nvidia",
-        contactEmail: "nvidia@gmail.com",
-        contactPhone: "4093829582",
-        rating: 4
+      name: "nvidia",
+      contactEmail: "nvidia@gmail.com",
+      contactPhone: "4093829582",
+      rating: 4
     }
-}
+  }
 ];
 
 
 beforeAll(async () => {
-    await connectDB();
+  await connectDB();
 });
 
 afterAll(() => {
@@ -50,3 +52,26 @@ beforeEach(async () => {
 });
 
 // GET /api/products
+describe("when there is initially some products saved", () => {
+  it( "should return all products", 
+    async () => {
+    const response = await api.get("/api/products").expect(200);
+      expect(response.body).toHaveLength(initialProducts.length);
+
+  })
+
+  it("should return products as json", async () => {
+  await api
+    .get("/api/products")
+    .expect(200)
+    .expect("Content-Type", /application\/json/);
+});
+
+  it("should include a specific product in the returned list", async () => {
+    const response = await api.get("/api/products");
+
+    expect(response.body.map((product) => product.category)).toContain(
+      "Food"
+    );
+  });
+});
